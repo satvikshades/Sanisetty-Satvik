@@ -1,0 +1,566 @@
+{% schema %}
+{
+"name":"Grid Section",
+ "settings":[
+ {"type":"text","id":"heading","label":"Section heading","default":"Tisso vision in the wild"},
+{"type":"header","content":"Pick your Products"},
+ {"type":"product","id":"product_1","label":"Product 1"},
+{"type":"product","id":"product_2","label":"Product 2"},
+ {"type":"product","id":"product_3","label":"Product 3"},
+ {"type":"product","id":"product_4","label":"Product 4"},
+{"type":"product","id":"product_5","label":"Product 5"},
+{"type":"product","id":"product_6","label":"Product 6"},
+{"type":"header","content":"Bonus Product (auto add)"},
+{"type":"product","id":"bonus_product","label":"Bonus Product","info":"This product will add when M and Black option is selected"}
+],
+"presets":[{"name":"Grid with Popup"}]
+}
+{% endschema %}
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;600&family=Lustria&display=swap" rel="stylesheet">
+
+<div class="grid-section-wrapper">
+  <div class="container">
+<h2 class="grid-section-heading">{{ section.settings.heading }}</h2>
+
+    <div class="grid-section" role="list">
+{% for i in (1..6) %}
+  {% assign key='product_' | append:i %}
+  {% assign handle=section.settings[key] %}
+{% if handle != blank %}
+    {% assign product=all_products[handle] %}
+  <div class="grid-item" role="listitem">
+   <img src="{{ product.featured_image | img_url:'900x' }}" 
+        alt="{{ product.title | escape }}" class="grid-item-image"
+      width=auto
+    height=auto>
+   <div class="grid-item-overlay">
+     <button class="open-modal-btn" 
+             data-product-handle="{{ product.handle }}" 
+             aria-label="Open {{ product.title | escape }} details">
+     </button>
+   </div>
+  </div>
+{% else %}
+  <div class="grid-item grid-item-empty"></div>
+{% endif %}
+{% endfor %}
+    </div>
+  </div>
+</div>
+
+<div id="productModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" data-bonus-product-handle="{{ section.settings.bonus_product }}">
+ <div class="modal-content" role="document">
+  <button class="modal-close" aria-label="Close">×</button>
+   <div class="modal-body">
+ <div class="modal-top-section">
+     <div class="modal-image-wrapper"><img id="modalImage" src="" alt="" class="modal-image" width=auto
+    height=auto></div>
+     <div class="modal-details">
+  <h3 id="modalName" class="modal-title"></h3>
+  <p id="modalPrice" class="modal-price"></p>
+      <p id="modalDesc" class="modal-desc"></p> </div>
+    </div>
+
+    <div class="variant-selectors-area">
+     <div id="colorVariantBlock" class="variant-block">
+  <label class="variant-label">Color</label>
+      <div id="colorOptions" class="color-options" role="radiogroup"><span class="active-color-bg"></span></div> </div>
+
+     <div id="sizeVariantBlock" class="variant-block">
+      <label class="variant-label">Size</label>
+    <div id="customSizeDropdown" class="custom-dropdown">
+  <button id="customSizeTrigger" class="custom-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false"><span id="customSizeSelectedText">Choose your size</span></button>
+             <ul id="customSizeOptions" class="custom-dropdown-options-wrapper" role="listbox"></ul>
+      </div> </div>
+    </div>
+
+    <div class="modal-actions"><button id="addToCartBtn" class="add-to-cart-btn">ADD TO CART</button></div>
+    <p id="modalNotice" class="modal-notice" aria-live="polite"></p>
+   </div></div>
+</div>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+  const el = {
+    modal: document.getElementById('productModal'),
+       image: document.getElementById('modalImage'),
+    name: document.getElementById('modalName'),
+    price: document.getElementById('modalPrice'),
+       desc: document.getElementById('modalDesc'),
+         colorOptions: document.getElementById('colorOptions'),
+    colorBg: document.querySelector('.active-color-bg'),
+    sizeDropdown: document.getElementById('customSizeDropdown'),
+  sizeTrigger: document.getElementById('customSizeTrigger'),
+    sizeDisplay: document.getElementById('customSizeSelectedText'),
+    sizeList: document.getElementById('customSizeOptions'),
+      addBtn: document.getElementById('addToCartBtn'),
+     notice: document.getElementById('modalNotice'),
+     closeBtn: document.querySelector('.modal-close'),
+  };
+  
+  let selection = { product: null, variant: null, size: null, color: null };
+
+  const allProductData = {
+    {% for i in (1..6) %}
+        {% assign key = 'product_' | append: i %}
+      {% assign handle = section.settings[key] %}
+       {% if handle != blank %}
+        "{{ all_products[handle].handle }}": {{ all_products[handle] | json }},
+      {% endif %}
+    {% endfor %}
+  };
+
+  const closeModal = () => {
+    el.modal.classList.remove('is-open');
+  el.sizeDropdown.classList.remove('is-open');
+    document.body.style.overflow = '';
+  };
+  
+  el.closeBtn.addEventListener('click', closeModal);
+  el.modal.addEventListener('click', (e) => { if (e.target === el.modal) closeModal(); });
+
+  
+  document.querySelectorAll('.open-modal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+  selection.product = allProductData[btn.dataset.productHandle];
+      if (!selection.product) return;
+      
+      selection = { ...selection, variant: null, size: null, color: null };
+      el.notice.textContent = '';
+      el.sizeDisplay.textContent = 'Choose your size';
+
+      el.name.textContent = selection.product.title;
+        el.price.textContent = `€${(selection.product.price / 100).toFixed(2).replace('.', ',')}`;
+     el.image.src = selection.product.featured_image;
+      el.desc.innerHTML = selection.product.description.replace(/<[^>]*>/g, '').split(' ').slice(0, 25).join(' ') + '...';
+      
+      el.colorOptions.querySelectorAll('.color-choice').forEach(c => c.remove());
+      const colors = [...new Set(selection.product.variants.map(v => v.option2).filter(Boolean))];
+      colors.forEach(color => {
+          const button = document.createElement('button');
+         button.className = 'color-choice';
+   button.textContent = color;
+        
+        const strip = document.createElement('span');
+        strip.className = 'color-strip-full';
+        strip.style.backgroundColor = color.toLowerCase();
+        strip.dataset.color = color.toLowerCase();
+        button.appendChild(strip);
+
+        button.onclick = () => {
+          selection.color = color;
+          el.colorOptions.querySelectorAll('.color-choice').forEach(b => b.classList.remove('active'));
+          button.classList.add('active');
+          el.colorBg.style.width = `${button.offsetWidth}px`;
+          el.colorBg.style.transform = `translateX(${button.offsetLeft}px)`;
+          selection.variant = selection.product.variants.find(v => v.option1 === selection.size && v.option2 === selection.color) || null;
+        };
+        el.colorOptions.appendChild(button);
+      });
+      el.colorBg.style.width = '0px';
+
+      el.sizeList.innerHTML = '';
+      const sizes = [...new Set(selection.product.variants.map(v => v.option1).filter(Boolean))];
+   sizes.forEach(size => {
+        const li = document.createElement('li');
+          li.textContent = size;
+             li.dataset.value = size;
+         el.sizeList.appendChild(li);
+      });
+
+      el.modal.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+
+  el.sizeTrigger.addEventListener('click', () => el.sizeDropdown.classList.toggle('is-open'));
+  
+  el.sizeList.addEventListener('click', (e) => {
+    if (e.target.tagName === 'LI') {
+      selection.size = e.target.dataset.value;
+      el.sizeDisplay.textContent = selection.size;
+      el.sizeDropdown.classList.remove('is-open');
+      selection.variant = selection.product.variants.find(v => v.option1 === selection.size && v.option2 === selection.color) || null;
+    }
+  });
+
+  el.addBtn.addEventListener('click', async () => {
+     if (!selection.variant) {
+   el.notice.textContent = 'Please choose a color and size.';
+      return;
+    }
+
+    el.addBtn.disabled = true;
+      el.addBtn.textContent = 'ADDING...';
+    
+    await fetch('/cart/add.js', {
+      method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: selection.variant.id, quantity: 1 })
+    });
+    
+    const sizeMatch = (selection.variant.option1 || '').toLowerCase() === 'm';
+    const colorMatch = (selection.variant.option2 || '').toLowerCase() === 'black';
+    if (sizeMatch && colorMatch) {
+      const handle = el.modal.dataset.bonusProductHandle;
+      if (handle) {
+        const res = await fetch(`/products/${handle}.js`);
+        if (res.ok) {
+          const product = await res.json();
+          const variantId = product.variants[0]?.id;
+          if (variantId) {
+            
+      await fetch('/cart/add.js', {
+          method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: variantId, quantity: 1 })
+            });}
+             }
+         }
+    }
+    
+    //  close up and reset the button.
+    setTimeout(() => {
+    closeModal();
+      el.addBtn.disabled = false;
+      el.addBtn.textContent = 'ADD TO CART';
+    }, 800);
+  });
+});
+</script>
+
+<style>
+/* --- General Section & Grid --- */
+.grid-section-wrapper {
+  padding: 80px 0 110px;
+  background: #fff;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+.grid-section-heading {
+  font-family: 'Lustria', serif;
+  font-weight: 400;
+  font-size: 36px;
+  color: #111;
+  margin: 0 0 40px 0;
+  text-align: left;
+}
+.grid-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.grid-item {
+  position: relative;
+  overflow: hidden;
+  background: #f8f8f8;
+}
+.grid-item-image {
+  width: 100%;
+  height: 500px;
+  object-fit: cover;
+}
+.open-modal-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+.open-modal-btn::before,
+.open-modal-btn::after {
+  content: '';
+  position: absolute;
+  background-color: #000;
+}
+.open-modal-btn::before {
+  width: 10px;
+  height: 2px;
+}
+.open-modal-btn::after {
+  width: 2px;
+  height: 10px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.modal.is-open {
+  display: flex;
+  opacity: 1;
+}
+.modal-content {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  color: #000;
+  width: 311px;
+  height: 447px;
+  box-sizing: border-box;
+  padding: 0;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: all 0.25s ease;
+}
+.modal.is-open .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 1001;
+}
+.modal-body {
+  height: 100%;
+  position: relative;
+}
+.modal-top-section {
+  display: flex;
+  padding: 36px 0 0 17px;
+  box-sizing: border-box;
+}
+.modal-image-wrapper {
+  flex-shrink: 0;
+}
+.modal-image {
+  width: 120px;
+  height: 140px;
+  object-fit: cover;
+}
+.modal-details {
+  padding-left: 8px;
+  padding-right: 20px;
+}
+.modal-title {
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  margin: 13px 0 0 0;
+}
+.modal-price {
+  font-family: 'Lustria', serif;
+  font-size: 16px;
+  margin: 10px 0 0 0;
+}
+.modal-desc {
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 6px 0 0 0;
+  max-height: 70px;
+  overflow: hidden;
+}
+
+/* Variant Selectors Area */
+.variant-selectors-area {
+  position: absolute;
+  top: 186px;
+  left: 20px;
+  width: 271px;
+}
+.variant-block {
+  margin-bottom: 12px;
+}
+.variant-label {
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.3;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Color Options with Sliding Background */
+.color-options {
+  position: relative;
+  display: flex;
+  border: 1px solid #000;
+  padding: 0;
+  height: 48px;
+  box-sizing: border-box;
+}
+.active-color-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+.color-choice {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  text-transform: capitalize;
+  padding: 0 0 0 8px;
+  z-index: 2;
+  color: #000;
+  transition: color 0.3s ease;
+}
+.color-choice:not(:last-child) {
+  border-right: 1px solid #000;
+}
+.color-choice.active {
+  color: #fff;
+}
+.color-strip-full {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+}
+.color-strip-full[data-color="white"] {
+  border-right: 1px solid #eee;
+}
+
+/* Custom Size Dropdown */
+#sizeVariantBlock {
+  margin-top: 18px;
+}
+.custom-dropdown {
+  position: relative;
+}
+.custom-dropdown-trigger {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  border: 1px solid #000;
+  background-color: #fff;
+  cursor: pointer;
+  padding: 0 13px;
+  text-align: left;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+.custom-dropdown-trigger::after {
+  content: '▾';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+.custom-dropdown.is-open .custom-dropdown-trigger::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+.custom-dropdown-options-wrapper {
+  display: none;
+  position: absolute;
+  top: 52px;
+  left: 0;
+  width: 271px;
+  max-height: 126px;
+  background-color: #fff;
+  border: 1px solid #000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 1000;
+  overflow-y: auto;
+}
+.custom-dropdown.is-open .custom-dropdown-options-wrapper {
+  display: block;
+}
+#customSizeOptions {
+  list-style: none;
+  margin: 0;
+  padding: 10px 0;
+}
+#customSizeOptions li {
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  padding: 10px 0;
+  cursor: pointer;
+}
+#customSizeOptions li:hover {
+  background-color: #f0f0f0;
+}
+#customSizeOptions li.selected {
+  font-weight: 600;
+}
+
+/* Actions */
+.modal-actions {
+  position: absolute;
+  top: 389px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+}
+.add-to-cart-btn {
+  position: relative;
+  background: #000;
+  color: #fff;
+  border: none;
+  height: 44px;
+  cursor: pointer;
+  width: 271px;
+  font-family: 'Jost', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20.48px;
+  letter-spacing: 0px;
+  text-transform: uppercase;
+}
+.add-to-cart-btn::after {
+  content: '→';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+}
+
+
+</style>

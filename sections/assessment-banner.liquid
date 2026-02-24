@@ -1,0 +1,347 @@
+<section class="custom-hero">
+
+    <header class="custom-hero__top">
+        <div class ="custom-hero__brand">
+            {{ section.settings.logo_text }}
+            </div>
+            <div class="custom-hero__tagline">
+                {{ section.settings.header_tagline }}
+                </div>
+            <a
+            href="{{ section.settings.button_url }}"
+            class="custom-hero__cta-top"
+        >
+            {{ section.settings.button_text }}
+            <span class="custom-hero__arrow">-></span>
+        </a>
+    </header>
+            <div class="custom-hero__body">
+                <div class="custom-hero__content">
+                    <h1 class="custom-hero__title">
+                        {{ section.settings.main_title }}
+                    </h1>
+                    <p class="custom-hero__description">
+                        {{ section.settings.description }}
+                        </p>
+                    <a 
+                        href="{{ section.settings.main_button_url }}"
+                        class="custom-hero__cta-main"
+                    >
+                        {{ section.settings.main_button_text }}
+                        <span class="custom-hero__arrow">-></span>
+                    </a>
+                    </div>
+                    <div class="custom-hero__footer">
+                        {{ section.settings.buttom_text }}
+                    </div>
+                <div class="custom-hero__media">
+                    <img 
+                    src="{{ 'Frame.svg' | asset_url }}"
+                    alt = "Hero Illustration"
+                    loading = "lazy"
+                    width="2000"
+                    height="1000"
+                >
+                </div>
+                
+                </div>
+            </section>
+            {% schema %}
+            {
+                "name": "Custom Banner",
+                "settings": [
+                    {
+                        "type": "header",
+                        "content" : "Top Bar"
+                    },
+                    {
+                        "type": "text",
+                        "id": "logo_text",
+                        "label": "Logo Text",
+                        "default": "TISSO VISION"
+                    },
+                    {
+                        "type": "text",
+                        "id": "header_tagline",
+                        "label": "Header Tagline",
+                        "default": "Find the ideal gift for your loved ones."
+                    },
+                    {
+                        "type": "text",
+                        "id": "button_text",
+                        "label": "Top Button Text",
+                        "default": "CHOOSE GIFT"
+                    },
+                    {
+                        "type": "url",
+                        "id": "button_url",
+                        "label": "Top button Link"
+                    },
+                    {
+                        "type": "header",
+                        "content": "Main Content"
+                    },
+                    {
+                        "type":"text",
+                        "id": "main_title",
+                        "label": "Main Title",
+                        "default": "The Gift Guide"
+                    },
+                    {
+                        "type":"textarea",
+                        "id":"description",
+                        "label": "Description",
+                        "default": "Discover Joy: Your Ultimate Holiday Gift Destination. Explore our curated selection and find the perfect gifts to delight your loved ones this holiday season."
+
+                    },
+                    {
+                        "type":"text",
+                        "id": "main_button_text",
+                        "label": "Main Button Text",
+                        "default": "SHOP NOW"
+                    },
+                    {
+                        "type": "url",
+                        "id": "main_button_url",
+                        "label":"Main Button Link"
+                    },
+                    {
+                        "type": "text",
+                        "id": "buttom_text",
+                        "label": "Bottom Strip Text",
+                        "default": "SUSTAINABLE, ETHICALLY MADE CLOTHES IN SIZES XXS TO 6XL"
+                    }
+                ],
+                "presets":[
+                    {
+                        "name": "Custom Banner"
+                    }
+                ]
+            }
+            {% endschema %}
+            {% stylesheet %}
+
+            .custom-hero__header {
+                position: relative;
+                z-index: 5;
+            }
+            .custom-hero{
+                display: flex;
+                flex-direction: column;
+                height: 95vh;
+                min-height: 800px;
+                font-family: 'Inter', sans-serif;
+                color: #000;
+                background-color: #fff ;
+            }
+            .custom-hero__top{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                position: relative;
+                width: 100%;
+                padding: 8px 20px;
+                flex-shrink: 0;
+                background-color: #F8F8F8;
+                border-bottom: 1px solid #EAEAEA;
+                z-index: 20;
+
+            }
+
+            .custom-hero__arrow {
+                font-size: 18px;
+                line-height: 1;
+            }
+
+            .custom-hero__brand{
+                font-family: 'Lustria', serif ! important;
+                font-size: 23px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #000;
+            }
+            .custom-hero__tagline{
+                font-family: 'Jans', sans-serif;
+                font-weight: 400;
+                font-style: normal;
+                line-height: 13.42px;
+                letter-spacing: 0px;
+                font-size: 16px;
+                white-space: nowrap;
+            }
+
+
+            .custom-hero__cta-top {
+                position: relative;
+                padding: 8px 26px;
+                
+            
+                line-height: 20.48px;
+                letter-spacing: 0px;
+                background: #FFE500;
+                color: #000;
+                text-decoration: none;
+                text-transform: uppercase;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                transition: color 0.3s ease;
+                z-index: 1;
+
+            }
+
+
+            .custom-hero__cta-top::before {
+                content : "";
+                position: absolute;
+                top:0;
+                left: 0;
+                height: 100%;
+                width: 0;
+                background-color: #000;
+                transition: width 0.4s ease;
+                z-index: -1;
+            }
+            .custom-hero__cta-top:hover::before{
+                width: 100%;
+            }
+
+            .custom-hero__cta-top:hover{
+                color: #fff;
+            }
+
+            .custom-hero__cta-top .arrow{
+
+                transition: transform 0.3s ease, color 0.3s ease;
+            }
+            .custom-hero__cta-top:hover .arrow{
+
+                color: #fff;
+            }
+
+            .custom-hero__body {
+                position: relative;
+                width: 100%;
+                flex-grow: 1;
+                overflow: hidden;
+            }
+
+
+            .custom-hero__media {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                
+
+            }
+
+            .custom-hero__media img{
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .custom-hero__content {
+                position: absolute;
+                left: 0;
+                bottom: 80px;
+                top: auto;
+                transform: none;
+                width: auto;
+                flex-direction: column;
+                display: flex;
+                z-index: 2;
+                max-width: 600px;
+                background: #fff;
+                padding: 40px 50px;
+                border-radius: 8px;
+                
+            }
+
+            .custom-hero__title {
+                font-size: 64px;
+                line-height: 1.05;
+                margin: 0;
+
+            }
+
+            .custom-hero__description {
+                font-size: 18px;
+                line-height: 1.6;
+
+            }
+            .custom-hero__cta-main {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px
+                ;
+                background: #000;
+                color: #fff;
+                padding: 14px 28px;
+                
+                text-decoration: none;
+                text-transform: uppercase;
+                font-weight: 600;
+
+                transition: background 0.3s ease, color 0.3s ease;
+
+                
+            }
+            .custom-hero__cta-main::before {
+                content: "";
+                position: absolute;
+                inset:0;
+                width: 0;
+                background: #FFE500;
+                transform:  scaleX(0);
+                transform-origin: left;
+                transition: width 0.3s ease;
+                z-index: -1;
+            }
+            .custom-hero__cta-main:hover::before {
+                transform: scaleX(1);
+            }
+
+            .custom-hero__cta-main:hover {
+                background: #FFE500;
+                color: #000;
+            }
+            .custom-hero__footer {
+                z-index: 10;
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                padding: 6px 10px;
+                background: #F8F8F8;
+                border-top: 1px solid #EAEAEA;
+                font-size: 14px;
+            }
+            @media (max-width: 768px){
+                .custom-hero__top{
+                    flex-direction: column;
+                    gap: 8px;
+                    text-align: center;
+
+                }
+                .custom-hero__body {
+                    padding: 60px 20px;
+                }
+                .custom-hero__title {
+                    font-size: 38px;
+
+                }
+                .custom-hero__description {
+                    font-size: 16px;
+                }
+                .custom-hero__footer {
+                    font-size: 12px;
+                }
+            }
+            
+            {% endstylesheet %}
